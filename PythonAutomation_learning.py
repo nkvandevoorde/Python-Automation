@@ -15,12 +15,12 @@ def remove_accents(input_str):
 
 #Find, Load, and Clean CNES data file
 script_dir = Path(__file__).parent.absolute()
-file_path = script_dir / "Downloads" / "SPHERE" / "my data" / "pandas data sheets" / "CNES_2024_with_REGIC_labels_p.xlsx"
+file_path = script_dir / "pandas data sheets copy" / "CNES_2024_with_REGIC_labels_p.xlsx"
 cnes_df = pd.read_excel(file_path)
 cnes_df = cnes_df.drop_duplicates()
 
 #Find, load, and clean Relatorio file
-relatorio_file_path = script_dir / "OneDrive - Washington University in St. Louis" / "Summer 2026" / "SPHERE" / "My data tables" / "relatorio-geral_COPY0510.xlsx"
+relatorio_file_path = script_dir / "pandas data sheets copy" / "relatorio-geral_COPY0510 copy.xlsx"
 relatorio_df = pd.read_excel(relatorio_file_path)
 relatorio_df = relatorio_df.drop_duplicates()
 #print(relatorio_df.columns) #check for correct columns
@@ -34,6 +34,7 @@ for index, row in cnes_df.iterrows():
         cnes_entries.append((
             remove_accents(str(city_val).strip().lower())
         ))
+print(len(cnes_entries)) #check for correct number of entries
 
 #Create list of CNES values from relatorio_df
 relatorio_entries = []
@@ -44,6 +45,7 @@ for index, row in relatorio_df.iterrows():
         relatorio_entries.append((
             remove_accents(str(city_val).strip().lower())
         ))
+print(len(relatorio_entries)) #check for correct number of entries
 
 #Open driver and bypass privacy error
 options = webdriver.ChromeOptions()
@@ -64,33 +66,38 @@ for cnes in cnes_entries:
     search_box.clear()  #Clear the search box
     search_box.send_keys(cnes)  #Enter the CNES value
     search_box.send_keys(Keys.RETURN)  #Submit
-    driver.implicitly_wait(2)  #Wait for the page to load
+    driver.implicitly_wait(3)  #Wait for the page to load
     #Grab and store address and coordinates for each CNES value
-    address_bar = driver.find_element(by = By.ID, value = "cnpj")
-    address = address_bar.text
-    cnes_grabs.append((cnes, address))
-    #no address case
-    if not address:
+    try:
+        address_bar = driver.find_element(by = By.ID, value = "cnpj")
+        address = address_bar.text.strip()
+    except Exception:
+        address = ""
+
+    if address:
+        cnes_grabs.append((cnes, address))
+    else:
         cnes_grabs.append((cnes, "No address found"))
 
 print(len(cnes_grabs)) #check for correct number of grabs
 
-#Input CNES values from cnes_df into search bar and submit
+#Input CNES values from relatorio_df into search bar and submit
 relatorio_grabs = []
-for cnes in cnes_entries:
+for cnes in relatorio_entries:
     search_box.clear()  #Clear the search box
     search_box.send_keys(cnes)  #Enter the CNES value
     search_box.send_keys(Keys.RETURN)  #Submit
-    driver.implicitly_wait(2)  #Wait for the page to load
+    driver.implicitly_wait(3)  #Wait for the page to load
     #Grab and store address and coordinates for each CNES value
-    address_bar = driver.find_element(by = By.ID, value = "cnpj")
-    address = address_bar.text
-    relatorio_grabs.append((cnes, address))
-    #no address case
-    if not address:
+    try:
+        address_bar = driver.find_element(by = By.ID, value = "cnpj")
+        address = address_bar.text.strip()
+    except Exception:
+        address = ""
+
+    if address:
+        relatorio_grabs.append((cnes, address))
+    else:
         relatorio_grabs.append((cnes, "No address found"))
 
 print(len(relatorio_grabs)) #check for correct number of grabs
-
-
-
