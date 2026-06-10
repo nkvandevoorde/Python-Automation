@@ -15,12 +15,12 @@ def remove_accents(input_str):
 
 #Find, Load, and Clean CNES data file
 script_dir = Path(__file__).parent.absolute()
-file_path = script_dir / "pandas data sheets copy" / "CNES_2024_with_REGIC_labels_p.xlsx"
+file_path = script_dir / "CNES_2024_with_REGIC_labels_p.xlsx"
 cnes_df = pd.read_excel(file_path)
 cnes_df = cnes_df.drop_duplicates()
 
 #Find, load, and clean Relatorio file
-relatorio_file_path = script_dir / "pandas data sheets copy" / "relatorio-geral_COPY0510 copy.xlsx"
+relatorio_file_path = script_dir / "relatorio-geral_COPY0510.xlsx"
 relatorio_df = pd.read_excel(relatorio_file_path)
 relatorio_df = relatorio_df.drop_duplicates()
 #print(relatorio_df.columns) #check for correct columns
@@ -68,17 +68,19 @@ for cnes in cnes_entries:
     search_box.send_keys(Keys.RETURN)  #Submit
     driver.implicitly_wait(3)  #Wait for the page to load
     #Grab and store address and coordinates for each CNES value
-    try:
-        address_bar = driver.find_element(by = By.ID, value = "cnpj")
+    plus_button = driver.find_element(
+        By.XPATH,
+        "//button[@ng-click='buscarEstabalecimento(estab.id)']"
+    )
+    if plus_button:
+        plus_button.click()  #Click the plus button to view details 
+        address_bar = driver.find_element(
+            By.XPATH("//input[@id='cnpj' and @ng-value='estabelecimento.noLogradouro']")
+        )
         address = address_bar.text.strip()
-    except Exception:
-        address = ""
-
-    if address:
         cnes_grabs.append((cnes, address))
     else:
         cnes_grabs.append((cnes, "No address found"))
-
 print(len(cnes_grabs)) #check for correct number of grabs
 
 #Input CNES values from relatorio_df into search bar and submit
@@ -89,15 +91,28 @@ for cnes in relatorio_entries:
     search_box.send_keys(Keys.RETURN)  #Submit
     driver.implicitly_wait(3)  #Wait for the page to load
     #Grab and store address and coordinates for each CNES value
-    try:
-        address_bar = driver.find_element(by = By.ID, value = "cnpj")
+    plus_button = driver.find_element(
+        By.XPATH,
+        "//button[@ng-click='buscarEstabalecimento(estab.id)']"
+    )
+    if plus_button:
+        plus_button.click()  #Click the plus button to view details 
+        address_bar = driver.find_element(by = By.XPATH("//input[@id='cnpj' and @ng-value='estabelecimento.noLogradouro']"))
         address = address_bar.text.strip()
-    except Exception:
-        address = ""
-
-    if address:
-        relatorio_grabs.append((cnes, address))
+        cnes_grabs.append((cnes, address))
     else:
-        relatorio_grabs.append((cnes, "No address found"))
-
+        cnes_grabs.append((cnes, "No address found"))
 print(len(relatorio_grabs)) #check for correct number of grabs
+
+driver.quit() #close driver
+
+#write cnes_grabs to excel file
+cnes_output_df = pd.DataFrame(cnes_grabs, columns=['CNES', 'Address'])
+cnes_output_file_path = script_dir / "cnes_output.xlsx"
+cnes_output_df.to_excel(cnes_output_file_path, index=False)
+
+#write relatorio_grabs to excel file
+relatorio_output_df = pd.DataFrame(relatorio_grabs, columns=['CNES', 'Address'])
+relatorio_output_file_path = script_dir / "relatorio_output.xlsx"
+relatorio_output_df.to_excel(relatorio_output_file_path, index=False)
+
