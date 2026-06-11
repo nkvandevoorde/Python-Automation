@@ -90,12 +90,28 @@ for cnes in cnes_entries:
         
         plus_button_xpath = "//button[@ng-click='buscarEstabalecimento(estab.id)']"
         if click(driver, plus_button_xpath):
-            address_bar_xpath = "//input[@ng-value='estabelecimento.noLogradouro']"
-            address_bar = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, address_bar_xpath)))  #Wait for address to be visible
-            address = address_bar.get_attribute("value")  #Get the value of the address input field
-            cnes_grabs.append((cnes, address))
-            close_btn_xpath = "//button[contains(@class,'close')]"
-            click(driver, close_btn_xpath)  #Close the details view
+            # wait for modal to appear
+            modal = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+            (By.XPATH, "//div[contains(@class,'modal')]")
+                )
+            )
+
+            # find visible address input inside modal
+            address = WebDriverWait(driver, 10).until(lambda d: next((el.get_attribute("value").strip()
+            for el in d.find_elements(By.XPATH,"//div[contains(@class,'modal')]//input[@ng-value='estabelecimento.noLogradouro']")
+                if el.is_displayed() and el.get_attribute("value").strip()), None))
+            cnes_grabs.append((cnes, address if address else "No address found"))
+            if len(cnes_grabs) % 100 == 0:
+                print(
+                        f"[CHECKPOINT] Processed {len(cnes_grabs)} records | "
+                        f"Last CNES: {cnes} | "
+                        f"Last address: {repr(address)}"
+                )
+            # close modal
+            click(driver, "//button[contains(@class,'close')]")
+
+   
         else:
             cnes_grabs.append((cnes, "No address found"))
     except StaleElementReferenceException:
