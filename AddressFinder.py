@@ -26,6 +26,14 @@ def click(driver, xpath, retries=3):
             continue    
     return False
 
+def get_address (driver, xpath):
+    try:
+        return WebDriverWait(driver, 10).until(lambda d: next((el.get_attribute("value").strip()
+                for el in d.find_elements(By.XPATH, xpath)
+                    if el.is_displayed() and el.get_attribute("value").strip()), None))
+    except TimeoutException:
+            return None 
+
 #Remove special characters for consistent spelling
 def remove_accents(input_str):
     if input_str is None:
@@ -99,15 +107,19 @@ for cnes in cnes_entries:
             )
 
             # find visible address input inside modal
-            address = WebDriverWait(driver, 10).until(lambda d: next((el.get_attribute("value").strip()
-            for el in d.find_elements(By.XPATH,"//div[contains(@class,'modal')]//input[@ng-value='estabelecimento.noLogradouro']")
-                if el.is_displayed() and el.get_attribute("value").strip()), None))
-            cnes_grabs.append((cnes, address if address else "No address found"))
+            address = get_address(driver, "//div[contains(@class,'modal')]//input[@ng-value='estabelecimento.noLogradouro']")
+            number = get_address(driver, "//div[contains(@class,'modal')]//input[@ng-value= 'estabelecimento.nuEndereco']")
+            zipCode = get_address(driver, "//div[contains(@class,'modal')]//input[@ui-mask='99999-999']")
+            
+            #append address and check to make sure the program is finding real addresses
+            cnes_grabs.append((cnes, number if number else "No number found", address if address else "No address found", zipCode if zipCode else "No zip code found"))
             if len(cnes_grabs) % 100 == 0:
                 print(
                         f"[CHECKPOINT] Processed {len(cnes_grabs)} records | "
                         f"Last CNES: {cnes} | "
-                        f"Last address: {repr(address)}"
+                        f"Last number: {repr(number)} | "
+                        f"Last address: {repr(address)} | "
+                        f"Last zip code: {repr(zipCode)}"
                 )
             # close modal
             click(driver, "//button[contains(@class,'close')]")
