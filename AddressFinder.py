@@ -86,54 +86,54 @@ driver = webdriver.Chrome(options=options)
 driver.get("https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?")
 print(driver.title) #check for correct website
 
-#Input CNES values from cnes_df into search bar and submit
-cnes_grabs = []
+# #Input CNES values from cnes_df into search bar and submit
+# cnes_grabs = []
 
-for cnes in cnes_entries:
-    try:
-        search_box = find_search_box(driver)  #Find search box
-        search_box.clear()  #Clear the search box
-        search_box.send_keys(cnes, Keys.RETURN)  #Submit
-        wait_for_results(driver)  #Wait for results to load
+# for cnes in cnes_entries:
+#     try:
+#         search_box = find_search_box(driver)  #Find search box
+#         search_box.clear()  #Clear the search box
+#         search_box.send_keys(cnes, Keys.RETURN)  #Submit
+#         wait_for_results(driver)  #Wait for results to load
         
-        plus_button_xpath = "//button[@ng-click='buscarEstabalecimento(estab.id)']"
-        if click(driver, plus_button_xpath):
+#         plus_button_xpath = "//button[@ng-click='buscarEstabalecimento(estab.id)']"
+#         if click(driver, plus_button_xpath):
 
-            # wait for modal to appear
-            modal = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located(
-            (By.XPATH, "//div[contains(@class,'modal')]")
-                )
-            )
+#             # wait for modal to appear
+#             modal = WebDriverWait(driver, 10).until(
+#             EC.presence_of_element_located(
+#             (By.XPATH, "//div[contains(@class,'modal')]")
+#                 )
+#             )
 
-            # find visible address input inside modal
-            address = get_address(driver, "//div[contains(@class,'modal')]//input[@ng-value='estabelecimento.noLogradouro']")
-            number = get_address(driver, "//div[contains(@class,'modal')]//input[@ng-value= 'estabelecimento.nuEndereco']")
-            zipCode = get_address(driver, "//div[contains(@class,'modal')]//input[@ui-mask='99999-999']")
+#             # find visible address input inside modal
+#             address = get_address(driver, "//div[contains(@class,'modal')]//input[@ng-value='estabelecimento.noLogradouro']")
+#             number = get_address(driver, "//div[contains(@class,'modal')]//input[@ng-value= 'estabelecimento.nuEndereco']")
+#             zipCode = get_address(driver, "//div[contains(@class,'modal')]//input[@ui-mask='99999-999']")
             
-            #append address and check to make sure the program is finding real addresses
-            cnes_grabs.append((cnes, number if number else "No number found", address if address else "No address found", zipCode if zipCode else "No zip code found"))
-            if len(cnes_grabs) % 100 == 0:
-                print(
-                        f"[CHECKPOINT] Processed {len(cnes_grabs)} records | "
-                        f"Last CNES: {cnes} | "
-                        f"Last number: {repr(number)} | "
-                        f"Last address: {repr(address)} | "
-                        f"Last zip code: {repr(zipCode)}"
-                )
-            # close modal
-            click(driver, "//button[contains(@class,'close')]")
-        else:
-            cnes_grabs.append((cnes, "No address found"))
-    except StaleElementReferenceException:
-        continue
-    except TimeoutException:
-        cnes_grabs.append((cnes, "No address found / Timeout"))
+#             #append address and check to make sure the program is finding real addresses
+#             cnes_grabs.append((cnes, number if number else "No number found", address if address else "No address found", zipCode if zipCode else "No zip code found"))
+#             if len(cnes_grabs) % 100 == 0:
+#                 print(
+#                         f"[CHECKPOINT] Processed {len(cnes_grabs)} records | "
+#                         f"Last CNES: {cnes} | "
+#                         f"Last number: {repr(number)} | "
+#                         f"Last address: {repr(address)} | "
+#                         f"Last zip code: {repr(zipCode)}"
+#                 )
+#             # close modal
+#             click(driver, "//button[contains(@class,'close')]")
+#         else:
+#             cnes_grabs.append((cnes, "No address found"))
+#     except StaleElementReferenceException:
+#         continue
+#     except TimeoutException:
+#         cnes_grabs.append((cnes, "No address found / Timeout"))
 
-#write cnes_grabs to excel file
-cnes_output_df = pd.DataFrame(cnes_grabs, columns=['CNES', 'Address'])
-cnes_output_file_path = script_dir / "cnes_output.xlsx"
-cnes_output_df.to_excel(cnes_output_file_path, index=False)
+# #write cnes_grabs to excel file
+# cnes_output_df = pd.DataFrame(cnes_grabs, columns=['CNES', 'Number', 'Address', 'Zip Code'])
+# cnes_output_file_path = script_dir / "cnes_output.xlsx"
+# cnes_output_df.to_excel(cnes_output_file_path, index=False)
 
 #Input CNES values from cnes_df into search bar and submit
 relatorio_grabs = []
@@ -160,7 +160,7 @@ for cnes in relatorio_entries:
             zipCode = get_address(driver, "//div[contains(@class,'modal')]//input[@ui-mask='99999-999']")
 
             #append address and check to make sure the program is finding real addresses
-            relatorio_grabs.append((cnes, address if address else "No address found"))
+            relatorio_grabs.append((cnes, number if number else "No number found", address if address else "No address found", zipCode if zipCode else "No zip code found"))
             if len(relatorio_grabs) % 100 == 0:
                 print(
                         f"[CHECKPOINT] Processed {len(relatorio_grabs)} records | "
@@ -179,6 +179,6 @@ for cnes in relatorio_entries:
         relatorio_grabs.append((cnes, "No address found / Timeout"))
 
 #write relatorio_grabs to excel file
-relatorio_output_df = pd.DataFrame(relatorio_grabs, columns=['CNES', 'Address'])
+relatorio_output_df = pd.DataFrame(relatorio_grabs, columns=['CNES', 'Number', 'Address', 'Zip Code'])
 relatorio_output_file_path = script_dir / "relatorio_output.xlsx"
 relatorio_output_df.to_excel(relatorio_output_file_path, index=False)
